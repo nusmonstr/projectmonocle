@@ -1,0 +1,72 @@
+########################################################################################################################
+Current Actions:
+########################################################################################################################
+
+Eric:
+    Write an entire row of elements to Excel
+
+Mark:
+    Add additional institutions to src/marksdata.py
+    Write some data visualization tools for category etc
+
+########################################################################################################################
+Action List:
+########################################################################################################################
+
+1) High Priority
+    Search for Duplicate line items in the NEW DATA... for multi instance Desc+Amnt+Date
+    Eliminate show_imports_used by finding a way to import without using explicitly (modules called from var strings Line 77 of updatefinances)
+
+2) Low Priority
+    Add arguments when running update_Finances, default to search dir for .ini and ask
+    Need valuation for Fidelity and general banks
+    Add warning about out of date files
+    Add account formulas in blank cells
+    Add python functions to add custom transactions, like cash transactions (selling to cash, buying from cash)
+        New split based on specific transaction
+        New tax relocation or automatic tax relo
+    Try Password hashing for use with Mechanize/Keyboard automation
+    Add Tax Balance Calculations and other Tax stats
+        Add Savings Statistics
+        Add net worth visualization curves
+        Add function to calculate estimated date for new networth
+
+3) Long Term
+    Mechanize to automate bank data downloading
+
+########################################################################################################################
+Completed:
+    Action Description       {Author:Eric} {Date:1/19/2017}
+########################################################################################################################
+    HealthEquity Investments history        {Author:Eric}
+    Add in user switch using config.ini     {Author:Eric}
+        - archive filename and path
+        - downloads filepath
+        - bank tuples
+        - toggle payroll processing
+        - passing xl sheet names and origin without messing up unpack... (file extension switch before unpack function)
+            Might make sense to get rid of generic unpack wrapper since need switch for Sheet names and origin
+        - file extension switch on archive_filename before writing transactions back to disk
+    Fix related_downloads selection and removal of old bank data    {Author:Eric}
+    Upload to shared repository    {Author:Eric}
+    Integrate shared Mark changes    {Author:Eric}
+    Create CSV with Headers    {Author:Eric}
+    Add flag for old/new (update all from finances to old and always tage new with new)    {Author:Eric}
+    Create extract method for ADP transaction history    {Author:Eric}
+    Figure out how to sort on Date and store Date    {Author:Eric}
+    Check to make sure all transactions are making it into file    {Author:Eric}
+    Eventually need compare method to iterate and check for existing    {Author:Eric}
+    Add try/catch for missing files    {Author:Eric}
+    Remove commas in all fields added to a transaction (so can be saved as csv without breaking)    {Author:Eric}
+    Need to add Pay period generation from date for missing?    {Author:Eric}
+    Need Status, any cat, subcat, tag, notes?    {Author:Eric}
+    Need to add Widget Savings!    {Author:Eric}
+    Create Setter and Getter for Data Validation on my transaction class    {Author:Eric}
+    Delete outdated bank data    {Author:Eric}
+    Need valuation for ADP and Vanguard    {Author:Eric}
+    Use COM lib to add new transactions directly to xlsx    {Author:Eric}
+    Open final spreadsheet automatically    {Author:Eric}
+    Cleanup unused functions atc from refactoring    {Author:Eric}
+    Create Finances.xlsx backup and    {Author:Eric}
+    Fix bug allowing NONE to be added in Transaction additions    {Author:Eric}
+    Clean old backups    {Author:Eric}

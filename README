@@ -1,0 +1,90 @@
+This is a python project template.
+
+It includes an initialized git repo.
+To create a new project:
+
+    1) Make a copy of this skeleton directory. Name it after your new project.
+
+    2) Rename the NAME module to be the name of your project or name of your root module.
+
+    3) Edit your setup.py to have all the information for your project.
+
+    4) Rename tests/NAME_tests.py to also have your root module name. Modify NAME import.
+
+    5) Double check it is all working by running 'nosetests' from dir root again.
+
+    6) Perform 'git add .' in root, then commit initial project. Also link to remote if appropriate.
+
+    7) Start programming.
+
+
+
+ For more information read up on distutils at http://docs.python.org/distutils/setupscript.html
+
+
+
+########################################################################################################################
+Typical Python .gitignore
+########################################################################################################################
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Bluemix vendored packages
+vendor/
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+
+# Translations
+*.mo
+*.pot
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# WingIDE (we do want .wpr but not .wpu)
+*.wpu
