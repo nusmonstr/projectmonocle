@@ -3,7 +3,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 from pkg import updatefinances
-#from ..pkg import module1, module2
+#from ..shwrap import module1, module2
 
 
 def test1(args):

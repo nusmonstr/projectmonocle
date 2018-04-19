@@ -20,4 +20,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == 'test':
         run.test1(sys.argv)
     else:
+        #input('Ready to import finances?')
         updatefinances.main(sys.argv)
+        #try:
+        #    updatefinances.main(sys.argv)
+        #except:
+        #    input('Ran into issue...')

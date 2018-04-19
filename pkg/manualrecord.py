@@ -83,7 +83,7 @@ def main():
             memo = desc
         else:
             memo = input('Enter a note for this transaction: ').strip()
-        record = Transaction(pubdate, desc, amnt, cat, subcat, notes=memo, status='Liquid', acnt='Cash', added=today)
+        record = Transaction(pubdate, desc, amnt, cat, subcat, notes=memo, status='Liquid', paypstyle='Semimonthly', acnt='Cash', added=today)
         print(record)
         user_input = input('Confirm the transaction above by pressing [y]').lower().strip()
         if user_input == 'y':

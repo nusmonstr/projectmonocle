@@ -26,6 +26,8 @@ from datetime import timedelta, datetime
 import win32com.client
 
 
+userpayp = 'Semimonthly'
+
 
 fund_lookup_adp = {
     '74149P705': 'T. Rowe Price Retirement 2020 Fund - Class R',
@@ -44,13 +46,38 @@ fund_lookup_hsainv = {
     'VWIAX': 'Vanguard Wellesley Income Admiral'}
 
 
-fund_lookup_vanguard = {
+vanguard_fund_lookup_1 = {
+    'CASH': 'External Account',
+    'VANGUARD 500 INDEX ADMIRAL CL': '500 Index Fund Adm',
+    'VANGUARD FEDERAL MONEY MARKET FUND': 'Federal Money Market',
+    'VANGUARD HEALTHCARE INVESTOR CL': 'Healthcare Index Fund',
+    'VANGUARD LONG TERM GOVT BOND INDEX ADMIRAL CL': 'Longterm Gov Bond Index',
+    'VANGUARD MID CAP INDEX ADMIRAL CL': 'Mid-Cap Index Fund Adm',
+    'VANGUARD PRECIOUS METALS & MINING INVESTOR CL': 'Precious Metals & Mining',
+    'VANGUARD SMALL CAP INDEX ADMIRAL CL': 'Small-Cap Index Fund Adm',
+    'VANGUARD TOTAL BOND MARKET INDEX ADMIRAL CL': 'Total Bond Mkt Index Adm',
+    'VANGUARD TOTAL INTL STOCK INDEX ADMIRAL CL': 'Tot Intl Stock Ix Admiral',
+    'VANGUARD WELLINGTON INVESTOR CL': 'Wellington Fund Inv',
+    'VANGUARD WELLINGTON ADMIRAL CL' : 'Wellington Fund Adm',
+    'VANGUARD LONG TERM TREASURY INDEX ADMIRAL CL': 'Longterm Gov Bond Index'}
+
+
+vanguard_fund_lookup_2 = {
     'Vanguard 500 Index Fund Admiral Shares': '500 Index Fund Adm',
+    'Vanguard Federal Money Market Fund': 'Federal Money Market',
+    'Vanguard Health Care Fund Investor Shares': 'Healthcare Index Fund',
+    'Vanguard Long-Term Government Bond Index Fund Admiral Shares': 'Longterm Gov Bond Index',
     'Vanguard Mid-Cap Index Fund Admiral Shares': 'Mid-Cap Index Fund Adm',
+    'Vanguard Precious Metals And Mining Fund Investor Shares': 'Precious Metals & Mining',
     'Vanguard Precious Metals and Mining Fund': 'Precious Metals & Mining',
     'Vanguard Small-Cap Index Fund Admiral Shares': 'Small-Cap Index Fund Adm',
+    'Vanguard Total Bond Market Index Fund Admiral Shares': 'Total Bond Mkt Index Adm',
     'Vanguard Total International Stock Index Fund Admiral Shares': 'Tot Intl Stock Ix Admiral',
-    'Vanguard Wellington Fund Investor Shares': 'Wellington Fund Inv'}
+    'Vanguard Wellington Fund Investor Shares': 'Wellington Fund Inv',
+    'Vanguard Wellington\x1a Fund Investor Shares': 'Wellington Fund Inv',
+    'Vanguard Wellington\x1a Fund Admiral\x1a Shares':  'Wellington Fund Adm',
+    'Vanguard Wellington Fund Admiral Shares':  'Wellington Fund Adm',
+    'Vanguard Long-Term Treasury Index Fund Admiral Shares': 'Longterm Gov Bond Index'}
 
 
 def import_citi(bank):
@@ -65,7 +92,27 @@ def import_citi(bank):
                 state, pubdate, desc, deb, cred, *trash = line
                 amnt = '-' + deb if deb is not '' else cred
                 # Create new transaction object with formatted data
-                s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+                s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
+                s.cat = s.subcat = ''
+                s.notes = ''
+                s.tag = ''
+                statement.append(s)
+    return statement, values
+
+
+def import_umbbank(bank):
+    skip_header, bank_data, bank_name, bank_status = bank.header, bank.filename, bank.title, bank.status
+    statement = list()
+    values = list()
+    with open(bank_data) as f:
+        lines = reader(f)
+        for line in islice(lines, skip_header, None):
+            # Verify that the line is not empty before unpacking
+            if line:
+                pubdate, trans_type, desc, memo, amnt = line
+                desc = desc + memo.strip()
+                # Create new transaction object with formatted data
+                s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
                 s.cat = s.subcat = ''
                 s.notes = ''
                 s.tag = ''
@@ -84,7 +131,7 @@ def import_fidelity(bank):
             if line:
                 pubdate, fund, desc, amnt, shares, *trash = line
                 # Create new transaction object with formatted data
-                s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+                s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
                 s.cat, s.subcat = _categorizeFidelity(s.desc)
                 s.notes = 'Shares/Unit '+shares+' | '+fund
                 s.tag = ''
@@ -103,7 +150,7 @@ def import_firsttech(bank):
             if line:
                 id, pubdate, effdate, type, amnt, check_no, ref, desc, *trash = line
                 # Create new transaction object with formatted data
-                s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+                s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
                 s.cat = s.subcat = ''
                 s.notes = ''
                 s.tag = ''
@@ -127,7 +174,7 @@ def import_healthequity(bank):
             amnt, pubdate, desc, *trash = line.split(',')
 
             # Create new Transaction object with formatted data
-            s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+            s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
             s.cat, s.subcat = _categorizeHealthEquity(s.desc)
             s.notes = ''
             s.tag = ''
@@ -152,10 +199,10 @@ def import_healthequityinv(bank):
             # Create new Transaction object with formatted data
             desc = ' '.join([memo, cat])
             price, share = [str(x) for x in [price, share]]
-            s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+            s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
             s.cat, s.subcat = _categorizeHealthEquityInv(cat)
             s.notes = 'Share Price: ' + price + ' Shares: ' + share
-            s.tag = fund_lookup_hsainv[fund]
+            s.fund = fund_lookup_hsainv[fund]
             statement.append(s)
     wb.close()
     return statement, values
@@ -182,14 +229,14 @@ def import_widget(bank):
         desc = _widgetwhat(desc, name)
 
         # Create new Transaction object with formatted data
-        s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+        s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
         s.cat = s.subcat = ''
         s.notes = ''
         s.tag = ''
         statement.append(s)
     baldate = datetime.date(datetime.fromtimestamp(os.path.getmtime(bank_data)))
     balance = line_Val[0].replace('<', ',').replace('>', ',').split(',')
-    v = Transaction(baldate, 'Placeholder', balance[2], acnt=bank_name, status=bank_status)
+    v = Transaction(baldate, 'Placeholder', balance[2], paypstyle=userpayp, acnt=bank_name, status=bank_status)
     values.append(v)
     return statement, values
 
@@ -214,10 +261,10 @@ def import_adp(bank):
         pubdate += 'Ymd'
         amnt = amnt[1:] if amnt.startswith('-') else '-' + amnt # reverse the sign on the amount string
         # Create new Transaction object with formatted data
-        s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+        s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
         s.cat, s.subcat = _categorizeADP(desc)
         s.notes = 'Share Price: ' + price + ' Shares: ' + shares
-        s.tag = fund_lookup_adp[fundcode]
+        s.fund = fund_lookup_adp[fundcode]
         statement.append(s)
     pubdate = datetime.date(datetime.fromtimestamp(os.path.getmtime(bank_data)))
     desc = 'Syncronize my 401K Value'
@@ -228,10 +275,10 @@ def import_adp(bank):
         pairs = dict(zip(tags, targets))
         shares, price, amnt, when, fundcode = [pairs.get(key) for key in keys]
         # Create new Transaction object with formatted data
-        s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+        s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
         s.cat, s.subcat = 'Income', 'Valuation'
         s.notes = 'Share Price: ' + price + ' Shares: ' + shares
-        s.tag = fund_lookup_adp[fundcode]
+        s.fund = fund_lookup_adp[fundcode]
         values.append(s)
     return statement, values
 
@@ -246,12 +293,15 @@ def import_vanguard(bank):
         for line in islice(lines, skip_header, None):
             # Verify that the line is not empty before unpacking
             if line: 
-                id, when0, pubdate, investment, desc, fund, price, shares, amnt, *trash = line
+                account, when0, pubdate, trantype, desc, fund, symbol, shares, price, amnt, *trash = line
                 # Create new transaction object with formatted data
-                s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
+                trash = '='.join(trash)
+                line_is = [account, when0, pubdate, trantype, desc, fund, symbol, shares, price, amnt, trash]
+                #print('|'.join(line_is))
+                s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
                 s.cat, s.subcat = _categorizeVanguard(desc)
                 s.notes = 'Share Price: '+price+' Shares: '+shares
-                s.tag = fund
+                s.fund = vanguard_fund_lookup_1[fund]
                 statement.append(s)
     pubdate = datetime.date(datetime.fromtimestamp(os.path.getmtime(bank_data)))
     with open(bank_data) as f:
@@ -262,13 +312,15 @@ def import_vanguard(bank):
                 if line[0].startswith('Account Number'):
                     break
                 else:
-                    id, desc, price, shares, amnt, *trash = line
+                    account, desc, symbol, shares, price, amnt, *trash = line
                     # Create new transaction object with formatted data
-                    s = Transaction(pubdate, desc, amnt, acnt=bank_name, status=bank_status)
-                    s.cat, s.subcat = 'Income','Valuation'
-                    s.notes = 'Share Price: '+price+' Shares: '+shares
-                    s.tag = fund_lookup_vanguard[desc]
-                    values.append(s)
+                    #print('act:', account, type(account))
+                    if account == '73510370':
+                        s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
+                        s.cat, s.subcat = 'Income','Valuation'
+                        s.notes = 'Share Price: '+price+' Shares: '+shares
+                        s.fund = vanguard_fund_lookup_2[desc]
+                        values.append(s)
     return statement, values
 
 

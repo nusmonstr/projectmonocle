@@ -22,11 +22,12 @@ Helper Functions
 
 """
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from math import floor
 from openpyxl import load_workbook
 import csv
 from collections import namedtuple
+from calendar import monthrange
 
 
 Bank = namedtuple('Bank', 'filename title extraction header status')
@@ -48,6 +49,39 @@ def find_missing(candidate_list, base_list):
         else:
             missing.append(candidate)
     return missing
+
+
+def valid_dates(first_payperiod, valid_pay_periods):
+    """ This function acts as a placeholder for a proper calculation of payperiods on semimonthly basis.
+        """
+    periods = []
+    end_date = datetime.date(datetime.now())
+    for period in valid_pay_periods:
+        periods.append(date(*[int(x) for x in period.split('-')]))
+    periods = set([x for x in periods if x > first_payperiod and x <= end_date])
+    return periods
+
+
+def midlast_month_weekdays(start_date):
+    """ This function acts as a range() like operation for datetime objects.
+        The function returns a *set* of datetime objects from provided start date to the present including
+        only the 15th and last day of the month. This function returns weekdays only, and will search for
+        the previous or next weekday depending on early_weekday boolean."""
+    end_date = datetime.date(datetime.now())
+    start_pair = (start_date.year, start_date.month)
+    stop_pair = (end_date.year, end_date.month)
+    periods = set()
+    # Figure out month/year combos between start and end
+    comprehensive_pairs = [(year, month) for year in range(start_date.year, end_date.year+1) for month in range(1, 13) if (year, month)>=start_pair and (year, month) <= stop_pair]
+    # Iterate through each and calculate 15th and last datetime obj
+    for iyear, imonth in comprehensive_pairs:
+        mid_nearest_workday = nearest_previous_workday(datetime(year=iyear, month=imonth, day=15)).date()
+        if mid_nearest_workday >= start_date and mid_nearest_workday <= end_date:
+            periods.add(mid_nearest_workday)
+        last_nearest_workday = nearest_previous_workday(last_day_of_month(mid_nearest_workday))
+        if last_nearest_workday >= start_date and last_nearest_workday <= end_date:
+            periods.add(last_nearest_workday)
+    return periods
 
 
 def periodic_dates(first_payperiod, payperiod_length):
@@ -133,8 +167,8 @@ def unpack_transactions_xl(workbook_name, sheet_name, origin):
             elements = [cell.value for cell in row][skip_cols:] # Skip to the origin column
             if None in elements:
                 elements = nones_to_null(elements)   # Swap None for empty strings
-            pubdate, desc, amnt, cat, subcat, tag, note, status, payp, acnt, added, *extra = elements
-            record = Transaction(pubdate, desc, amnt, cat, subcat, tag, note, status, payp, acnt, added)
+            pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added, *extra = elements
+            record = Transaction(pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added)
             statement.append(record)
     return statement
 
@@ -148,16 +182,16 @@ def unpack_transactions_csv(csv_name):
             if line:    # Verify that the line is not empty before unpacking
                 if None in line:
                     line = nones_to_null(line)   # Swap None for empty strings
-                pubdate, desc, amnt, cat, subcat, tag, note, status, payp, acnt, added, *extra = line
+                pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added, *extra = line
                 pubdate = pubdate.replace('-', '') + 'Ymd'
-                record = Transaction(pubdate, desc, amnt, cat, subcat, tag, note, status, payp, acnt, added)
+                record = Transaction(pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added)
                 statement.append(record)
     return statement
 
 
 class Transaction:
     """ This class defines the basic fundamental record used for financial record keeping. """
-    def __init__(self, pubdate='1/1/2016', desc='Default', amnt='0', cat='', subcat='', notes='', tag='', status='Default', payp='', acnt='Default', added=''):
+    def __init__(self, pubdate='1/1/2016', desc='Default', amnt='0', cat='', subcat='', notes='', tag='', status='Default', taxation='', paypstyle = '', payp='', acnt='Default', fund='', added=''):
         self.desc = desc
         self.amnt = amnt
         self.cat = cat
@@ -165,8 +199,11 @@ class Transaction:
         self.notes = notes
         self.tag = tag
         self.status = status
+        self.taxation = taxation
+        self.paypstyle = paypstyle
         self.payp = ''
         self.acnt = acnt
+        self.fund = fund
         self.added = added
         self.datenum = ''
         self.pubdate = pubdate  # This is last because it sets other attributes
@@ -175,14 +212,25 @@ class Transaction:
         return self._pubdate
 
     def set_pubdate(self, value):
+        #print(self.desc, value, type(value)) #For Troubleshooting Date setting
         if isinstance(value, str):
             if value.endswith('Ymd'):
                 value = value[4:6]+'/'+value[6:8]+'/'+value[0:4]
+            #try:
+            #    value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
             value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
+            '''
+            except:
+                print('description',self.desc)
+                print('amount', self.amnt)
+                print('date value',value)
+                exit()
+            '''
+
         elif isinstance(value, datetime):
             value = datetime.date(value)
         self._pubdate = value
-        self.payp = calculate_payperiod(value)
+        self.payp = calculate_payperiod(value, self.paypstyle)
         self.datenum = datetime_to_xl(value)
     pubdate = property(get_pubdate, set_pubdate)
 
@@ -224,25 +272,45 @@ class Transaction:
     def __repr__(self):
         pubdatestr = datetime.strftime(self.pubdate,'%m/%d/%y')
         paypstr = datetime.strftime(self.payp, '%m/%d/%y')
-        return ', '.join([pubdatestr, (self.desc+' '*20)[:20], (str(self.amnt)+' '*8)[:8], self.cat, self.subcat, self.notes, self.tag, self.status, paypstr, self.acnt, self.added, str(self.datenum)])
+        return ', '.join([pubdatestr, (self.desc+' '*20)[:20], (str(self.amnt)+' '*8)[:8], self.cat, self.subcat, self.notes, self.tag, self.status, self.taxation, self.paypstyle, paypstr, self.acnt, self.fund, self.added, str(self.datenum)])
 
     def spill(self, empty_columns):
-        return [self.pubdate, self.desc, self.amnt, self.cat, self.subcat, self.notes, self.tag, self.status, self.payp, self.acnt, self.added, self.datenum] + [''] * empty_columns
+        return [self.pubdate, self.desc, self.amnt, self.cat, self.subcat, self.notes, self.tag, self.status, self.taxation, self.paypstyle, self.payp, self.acnt, self.fund, self.added, self.datenum] + [''] * empty_columns
 
     def spoon_feed(self):
-        raw = [self.pubdate, self.desc, self.amnt, self.cat, self.subcat, self.notes, self.tag, self.status, self.payp, self.acnt, self.added, self.datenum]
+        raw = [self.pubdate, self.desc, self.amnt, self.cat, self.subcat, self.notes, self.tag, self.status, self.taxation, self.paypstyle, self.payp, self.acnt, self.fund, self.added, self.datenum]
         return [str(x) for x in raw]
 
-def calculate_payperiod(pubdate):
+def calculate_payperiod(pubdate, frequency):
     """ This function returns the payperiod datetime object that a provided date belongs to."""
-    first_payperiod = datetime.date(datetime(2016, 1, 8))   # Need to remove this hardcoded first paycheck $$$
-    if pubdate < first_payperiod:
-        first_payperiod = datetime.date(datetime(2005, 1, 1))
-    days_gone = pubdate - first_payperiod
-    periods = floor(days_gone.days/14)
-    offset = timedelta(days=periods*14)
-    return first_payperiod + offset
-
+     #Payperiod In Use 	 Payperiod 	 Semimonthly 	 Biweekly Up 	 Biweekly Down
+    if frequency == 'Semimonthly':
+        # for may 18th 2009, what is the previously past billing
+        # step one, figure out if >= last weekday of month
+        last_weekday_of_month = nearest_previous_workday(last_day_of_month(pubdate))
+        if pubdate >= last_weekday_of_month:
+            return last_weekday_of_month
+        else:
+            # if yes then yes else calculate the half date
+            month_midpoint = nearest_previous_workday(pubdate.replace(day=15))
+            # step two, which side? if greater then half else last day of last month
+            if pubdate >= month_midpoint:
+                return month_midpoint
+            else:
+                last_day_of_previous_month = pubdate.replace(day=1) - timedelta(days=1)
+                last_weekday_of_previous_month = nearest_previous_workday(last_day_of_previous_month)
+                return last_weekday_of_previous_month
+    elif frequency.startswith('Biweekly'):
+        first_payperiod = datetime.date(datetime(1999, 1, 1))   # hard coded dates just used for offset, arbitrarily called Up and Down
+        if frequency.endswith('Down'):
+            first_payperiod = datetime.date(datetime(1999, 1, 8))
+        days_gone = pubdate - first_payperiod
+        periods = floor(days_gone.days/14)
+        offset = timedelta(days=periods*14)
+        return first_payperiod + offset
+    # Options include Monthly first weekday, last weekday, arbitrary nearest  prior weekday, arbitrary nearest next weekday
+    elif frequency.startswith('Monthly'):
+        pass
 
 #########################################################################
 #   Generic Functions
@@ -282,3 +350,73 @@ def nones_to_null(my_list):
         else:
             no_holes.append(x)
     return no_holes
+
+
+def is_weekday(any_date):
+    if any_date.weekday() <= 4:
+        return True
+    else:
+        return False
+
+
+def nearest_previous_workday(any_date):
+    nearest = False
+    while not nearest:
+        if is_weekday(any_date):
+            nearest = any_date
+        else:
+            any_date += timedelta(days = -1)
+    return nearest
+
+
+def last_day_of_month(anydate):
+    return anydate.replace(day=monthrange(anydate.year, anydate.month)[1])
+
+if __name__ == "__main__":
+
+    for each in midlast_month_weekdays(date(year=2010, month=8, day=6)):
+        print(each)
+    exit(0)
+    with open('pubdates.txt', 'r') as fh:
+        raw_dates = fh.readlines()
+    all_datetimes = [datetime.strptime(x.strip(), '%m/%d/%Y') for x in raw_dates]
+    '''
+    with open('semiperiod.txt', 'w') as ans:
+        all_datetimes = [datetime.strptime(x.strip(), '%m/%d/%Y') for x in raw_dates]
+        for each in all_datetimes:
+            ans.write(calculate_payperiod(each, 'semi').strftime('%m/%d/%Y')+'\n')
+    exit(0)
+    '''
+    for each in all_datetimes[4000:4020]:
+        print('For date of', each)
+        print('\tSemi period is', calculate_payperiod(each,'Semimonthly'))
+        print('\tBiweekly Up period is', calculate_payperiod(each.date(),'Biweekly Up'))
+        print('\tBiweekly Down period is', calculate_payperiod(each.date(),'Biweekly Down'))
+
+
+'''
+Friday, January 13, 2017
+Tuesday, January 31, 2017
+Wednesday, February 15, 2017
+Tuesday, February 28, 2017
+Wednesday, March 15, 2017
+Friday, March 31, 2017
+Friday, April 14, 2017
+Friday, April 28, 2017
+Monday, May 15, 2017
+Wednesday, May 31, 2017
+Thursday, June 15, 2017
+Friday, June 30, 2017
+Friday, July 14, 2017
+Monday, July 31, 2017
+Tuesday, August 15, 2017
+Thursday, August 31, 2017
+Friday, September 15, 2017
+Friday, September 29, 2017
+Friday, October 13, 2017
+Tuesday, October 31, 2017
+Wednesday, November 15, 2017
+Thursday, November 30, 2017
+Friday, December 15, 2017
+Friday, December 29, 2017
+'''

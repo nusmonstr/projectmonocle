@@ -18,6 +18,7 @@ Action List:
     Eliminate show_imports_used by finding a way to import without using explicitly (modules called from var strings Line 77 of updatefinances)
 
 2) Low Priority
+    Check to make sure sheet is filter clear and sorted descending date
     Add arguments when running update_Finances, default to search dir for .ini and ask
     Need valuation for Fidelity and general banks
     Add warning about out of date files
@@ -33,6 +34,7 @@ Action List:
 
 3) Long Term
     Mechanize to automate bank data downloading
+    Consider Data file structure
 
 ########################################################################################################################
 Completed:
