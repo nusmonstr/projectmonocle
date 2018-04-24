@@ -1,25 +1,16 @@
 ########################################################################################################################
-Current Actions:
-########################################################################################################################
-
-Eric:
-    Write an entire row of elements to Excel
-
-Mark:
-    Add additional institutions to src/marksdata.py
-    Write some data visualization tools for category etc
-
-########################################################################################################################
 Action List:
 ########################################################################################################################
 
 1) High Priority
+    Use the balance information in Widget and First Tech for more than just Alert Transactions
     Search for Duplicate line items in the NEW DATA... for multi instance Desc+Amnt+Date
     Eliminate show_imports_used by finding a way to import without using explicitly (modules called from var strings Line 77 of updatefinances)
+    Clean up names and functions
+    Eliminate any $$$ or TODOs
 
 2) Low Priority
     Check to make sure sheet is filter clear and sorted descending date
-    Add arguments when running update_Finances, default to search dir for .ini and ask
     Need valuation for Fidelity and general banks
     Add warning about out of date files
     Add account formulas in blank cells
@@ -33,13 +24,18 @@ Action List:
         Add function to calculate estimated date for new networth
 
 3) Long Term
-    Mechanize to automate bank data downloading
+    Mechanize to automate bank data downloading or pyautogui
     Consider Data file structure
 
 ########################################################################################################################
 Completed:
     Action Description       {Author:Eric} {Date:1/19/2017}
 ########################################################################################################################
+    Create new Widget import since .QFX is no longer offered {Date:4/24/2018}
+    Cleanup the code, remove switches for other users  {Date:4/24/2018}
+    Import Vanguard properly (ignore older non-brokerage balance and transactions) {Date:4/24/2018}
+    Vanguard Valuation (fixed when moving to funds broke the previous tag mapping) {Date:4/24/2018}
+    Set to mark HSA transactions "CURRENT YEAR CONTRIBUTION" as Transfer	Account {Date:4/24/2018}
     HealthEquity Investments history        {Author:Eric}
     Add in user switch using config.ini     {Author:Eric}
         - archive filename and path

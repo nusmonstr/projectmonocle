@@ -62,11 +62,12 @@ def valid_dates(first_payperiod, valid_pay_periods):
     return periods
 
 
-def midlast_month_weekdays(start_date):
+def midlast_month_weekdays(start_date_str):
     """ This function acts as a range() like operation for datetime objects.
         The function returns a *set* of datetime objects from provided start date to the present including
         only the 15th and last day of the month. This function returns weekdays only, and will search for
         the previous or next weekday depending on early_weekday boolean."""
+    start_date = datetime.strptime(start_date_str, '%m-%d-%Y').date()
     end_date = datetime.date(datetime.now())
     start_pair = (start_date.year, start_date.month)
     stop_pair = (end_date.year, end_date.month)

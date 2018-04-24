@@ -4,14 +4,13 @@ except ImportError:
 config = {
     'description': 'My Project',
     'author': 'Eric Champe',
-    'url': 'url to get it at',
-    'download_url': 'where to download it',
+    'url': 'https://github.com/nusmonstr/projectmonocle',
     'author_email': 'eric_champe@live.com',
-    'version': '0.1',
-    'install_requires': ['nose'],
-    'packages': ['NAME'],
-    'scripts': [],
-    'name': 'projectname'
+    'version': '1.1',
+    'install_requires': ['win32com'],
+    'packages': [''],
+    'scripts': [''],
+    'name': 'FinPy - Personal Finance Aggregator'
 }
 
 setup(**config)
