@@ -168,9 +168,10 @@ def unpack_transactions_xl(workbook_name, sheet_name, origin):
             elements = [cell.value for cell in row][skip_cols:] # Skip to the origin column
             if None in elements:
                 elements = nones_to_null(elements)   # Swap None for empty strings
-            pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added, *extra = elements
-            record = Transaction(pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added)
-            statement.append(record)
+            if elements[0]: # Skip rows without a date
+                pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added, *extra = elements
+                record = Transaction(pubdate, desc, amnt, cat, subcat, tag, note, status, taxation, paypstyle, payp, acnt, fund, added)
+                statement.append(record)
     return statement
 
 
@@ -217,16 +218,17 @@ class Transaction:
         if isinstance(value, str):
             if value.endswith('Ymd'):
                 value = value[4:6]+'/'+value[6:8]+'/'+value[0:4]
-            #try:
-            #    value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
-            value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
-            '''
+            try:
+                value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
+            #value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
+            #'''
             except:
-                print('description',self.desc)
+                print('description', self.desc)
+                print('description', self.desc)
                 print('amount', self.amnt)
-                print('date value',value)
+                print('date value', value)
                 exit()
-            '''
+            #'''
 
         elif isinstance(value, datetime):
             value = datetime.date(value)

@@ -3,7 +3,7 @@ Created on Jul 29, 2016
 Modified on Apr 23, 2018
 @author: Eric Champe
 '''
-
+from sys import stdout
 from .subpkg.ericsdata_functions import *
 from .subpkg.financialelements import unpack_transactions, batch_setattr, Bank, find_missing, periodic_dates, find_downloads, archive_cleanup, midlast_month_weekdays
 from datetime import datetime
@@ -127,13 +127,14 @@ def main():
     # Write additions directly to spreadsheet
     print('    [!] ' + '{} new transactions will be added to {}'.format(len(new_trans), user_dict['archive_filename']))
     if new_trans:
-        xl_app = win32com.client.Dispatch('Excel.Application')
+        xl_app = win32com.client.dynamic.Dispatch('Excel.Application')
         xl_app.Workbooks.Open(archive_filepath)
         xl_sheet = xl_app.Sheets(user_dict['archive_sheet'])
         xl_app.Visible = False
-        for record in new_trans:
+        for i, record in enumerate(new_trans):
             xl_sheet.Rows('11:11').Insert()
             xl_sheet.Range('B11:P11').value = record.spoon_feed()    # record is 15 elements long
+            stdout.write('\r    [!] ' + 'New Transaction #{} is being written'.format(i))
         xl_app.Visible = True
     else:
         print('    [!] '+'No new transactions were found.')

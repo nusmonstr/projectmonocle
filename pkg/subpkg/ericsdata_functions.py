@@ -20,7 +20,6 @@ from itertools import islice
 from .financialelements import Bank, Transaction
 import os
 from datetime import timedelta, datetime, date
-import win32com.client
 
 userpayp = 'Semimonthly'
 
@@ -37,7 +36,8 @@ vanguard_fund_lookup_1 = {
     'VANGUARD TOTAL INTL STOCK INDEX ADMIRAL CL': 'Tot Intl Stock Ix Admiral',
     'VANGUARD WELLINGTON INVESTOR CL': 'Wellington Fund Inv',
     'VANGUARD WELLINGTON ADMIRAL CL' : 'Wellington Fund Adm',
-    'VANGUARD LONG TERM TREASURY INDEX ADMIRAL CL': 'Longterm Gov Bond Index'}
+    'VANGUARD LONG TERM TREASURY INDEX ADMIRAL CL': 'Longterm Gov Bond Index',
+    'VANGUARD GLOBAL CAPITAL CYCLES INVESTOR CL': 'Capital Cycles?'}
 
 vanguard_fund_lookup_2 = {
     'Vanguard 500 Index Fund Admiral Shares': '500 Index Fund Adm',
@@ -86,7 +86,7 @@ def import_umbbank(bank):
                 desc = desc + memo.strip()
                 # Create new transaction object with formatted data
                 s = Transaction(pubdate, desc, amnt, paypstyle=userpayp, acnt=bank_name, status=bank_status)
-                s.cat = s.sub_cat = _categorizeUMB(desc)
+                s.cat, s.sub_cat = _categorizeUMB(desc)
                 s.notes = ''
                 s.tag = ''
                 statement.append(s)
@@ -113,7 +113,7 @@ def import_fidelity(bank):
 def import_firsttech(bank):
     skip_header, bank_data, bank_name, bank_status = bank.header, bank.filename, bank.title, bank.status
     statement = list()
-    balance_values = list()
+    #balance_values = list()
     with open(bank_data) as f:
         lines = reader(f)
         for line in islice(lines, skip_header, None):
@@ -125,11 +125,12 @@ def import_firsttech(bank):
                 s.notes = ''
                 s.tag = ''
                 statement.append(s)
-                balance_values.append((pubdate, balance))
-    baldate = datetime.date(datetime.fromtimestamp(os.path.getmtime(bank_data)))
-    balance = round(float(sorted(balance_values, key=lambda x: x[0], reverse=True)[0][1]), 2)
-    v = Transaction(baldate, 'ACCOUNT BALANCE GAP', balance, paypstyle=userpayp, acnt=bank_name, status=bank_status)
-    return statement, [v]
+                #balance_values.append((pubdate, balance))
+    # Balance Gap is not working, amount is not accurate $$$
+    #baldate = datetime.date(datetime.fromtimestamp(os.path.getmtime(bank_data)))
+    #balance = round(float(sorted(balance_values, key=lambda x: x[0], reverse=True)[0][1]), 2)
+    #v = Transaction(baldate, 'ACCOUNT BALANCE GAP', balance, paypstyle=userpayp, acnt=bank_name, status=bank_status)
+    return statement, []
 
 
 def import_widget(bank):
@@ -185,7 +186,7 @@ def import_vanguard(bank):
                 s.cat, s.sub_cat = _categorizeVanguard(desc)
                 s.notes = 'Share Price: '+price+' Shares: '+shares
                 s.fund = vanguard_fund_lookup_1[fund]
-                if s.pubdate > date(year=2018, month=2, day=1):
+                if s.pubdate > date(year=2018, month=9, day=6): # Use this to stop pulling transactions with wrong debit/credit polarity
                     statement.append(s)
     pubdate = datetime.date(datetime.fromtimestamp(os.path.getmtime(bank_data)))
     with open(bank_data) as f:
