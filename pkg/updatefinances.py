@@ -10,7 +10,7 @@ from datetime import datetime
 from copy import deepcopy
 import win32com.client
 from shutil import copyfile
-from os import path, chdir
+from os import path, chdir, listdir
 
 
 def explicit_use():   # How do I tell pycharm that the functions are being used, I call the bank functions programmatically with extraction_fn
@@ -136,6 +136,7 @@ def main():
             xl_sheet.Range('B11:P11').value = record.spoon_feed()    # record is 15 elements long
             stdout.write('\r    [!] ' + 'New Transaction #{} is being written'.format(i))
         xl_app.Visible = True
+        print('')
     else:
         print('    [!] '+'No new transactions were found.')
     print('>>> Processing Complete')

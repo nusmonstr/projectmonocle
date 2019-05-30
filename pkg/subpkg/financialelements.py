@@ -117,6 +117,17 @@ def find_downloads(full_banklist, download_path=None):
     if download_path:
         os.chdir(download_path)
     directory_listing = [file for file in os.listdir(os.getcwd())]
+    '''
+    # Cleanup Citi Downloads because of dumb naming
+    raw = input('Are you sure you downloaded Personal Citi Bank Data first?')
+    if raw:
+        exit('Go Fix Citi and rerun')
+    citi_downloads = [x for x in directory_listing if x.startswith('Since') and x.endswith('.CSV')]
+    citi_downloads = sorted([(x, datetime.fromtimestamp(os.path.getctime(x))) for x in citi_downloads], key=lambda x: x[1])
+    [os.remove(x) for x in directory_listing if x.endswith('_CURRENT_VIEW.CSV')]
+    os.rename(citi_downloads[0][0], 'MC_188_CURRENT_VIEW.CSV')
+    os.rename(citi_downloads[1][0], 'MC_317_CURRENT_VIEW.CSV')
+    '''
     available_banks = list()
     for bank in full_banklist:
         name, extension = bank.filename.split('.')
@@ -220,15 +231,12 @@ class Transaction:
                 value = value[4:6]+'/'+value[6:8]+'/'+value[0:4]
             try:
                 value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
-            #value = datetime.date(datetime.strptime(value, '%m/%d/%Y'))
-            #'''
             except:
-                print('description', self.desc)
-                print('description', self.desc)
-                print('amount', self.amnt)
-                print('date value', value)
+                print('Failed to convert to date')
+                print('description <{}>'.format(self.desc))
+                print('amount <{}>'.format(self.amnt))
+                print('date value <{}>'.format(value))
                 exit()
-            #'''
 
         elif isinstance(value, datetime):
             value = datetime.date(value)
@@ -283,6 +291,7 @@ class Transaction:
     def spoon_feed(self):
         raw = [self.pubdate, self.desc, self.amnt, self.cat, self.subcat, self.notes, self.tag, self.status, self.taxation, self.paypstyle, self.payp, self.acnt, self.fund, self.added, self.datenum]
         return [str(x) for x in raw]
+
 
 def calculate_payperiod(pubdate, frequency):
     """ This function returns the payperiod datetime object that a provided date belongs to."""

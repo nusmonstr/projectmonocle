@@ -31,7 +31,9 @@ Action List:
 Completed:
     Action Description       {Author:Eric} {Date:1/19/2017}
 ########################################################################################################################
-    Create new Widget import since .QFX is no longer offered {Date:4/24/2018}
+implement Auto Categorization
+Adjust Vanguard transaction Polarity for Dividends and Transfers
+Create new Widget import since .QFX is no longer offered {Date:4/24/2018}
     Cleanup the code, remove switches for other users  {Date:4/24/2018}
     Import Vanguard properly (ignore older non-brokerage balance and transactions) {Date:4/24/2018}
     Vanguard Valuation (fixed when moving to funds broke the previous tag mapping) {Date:4/24/2018}
